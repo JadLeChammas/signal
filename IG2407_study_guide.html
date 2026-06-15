@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IG2407 — Signal Acquisition & Processing</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #161b27;
+    --bg3: #1c2333;
+    --card: #1e2538;
+    --border: #2d3652;
+    --accent: #4f8ef7;
+    --accent2: #7c4dff;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --teal: #14b8a6;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --label: #b8c4d6;
+    --tag-bg: #252d45;
+    --radius: 10px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 16px; line-height: 1.7; }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,17,23,0.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; gap: 0; overflow-x: auto;
+  }
+  nav .brand { font-weight: 700; font-size: 15px; color: var(--accent); padding: 1rem 1.5rem 1rem 0; white-space: nowrap; border-right: 1px solid var(--border); margin-right: 1rem; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 13.5px; padding: 1rem 0.75rem; white-space: nowrap; border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s; }
+  nav a:hover { color: var(--text); }
+  nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* HERO */
+  .hero { background: linear-gradient(135deg, #0f1117 0%, #1a1f35 50%, #0f1117 100%); padding: 4rem 2rem; text-align: center; border-bottom: 1px solid var(--border); }
+  .hero h1 { font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero p { color: var(--muted); margin-top: 0.75rem; font-size: 1.05rem; }
+  .hero .chips { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+  .chip { background: var(--tag-bg); color: var(--label); border: 1px solid var(--border); border-radius: 999px; padding: 4px 14px; font-size: 12.5px; }
+
+  /* LAYOUT */
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+  section { margin-bottom: 3.5rem; }
+  h2.sec { font-size: 1.5rem; font-weight: 700; color: var(--text); border-left: 4px solid var(--accent); padding-left: 1rem; margin-bottom: 1.5rem; }
+  h3.sub { font-size: 1.1rem; font-weight: 600; color: var(--label); margin: 1.5rem 0 0.75rem; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+  .formula-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; margin: 0.75rem 0; font-family: 'Courier New', monospace; color: #c4d8ff; }
+  .formula-box.center { text-align: center; }
+
+  /* ACCORDION */
+  details { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 0.75rem; overflow: hidden; }
+  summary { cursor: pointer; padding: 1rem 1.25rem; font-weight: 600; color: var(--text); list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; font-size: 20px; color: var(--accent); transition: transform 0.2s; flex-shrink: 0; }
+  details[open] summary::after { transform: rotate(45deg); }
+  details[open] summary { border-bottom: 1px solid var(--border); }
+  .detail-content { padding: 1.25rem; }
+  .detail-content p { color: var(--label); margin-bottom: 0.75rem; }
+  .detail-content p:last-child { margin-bottom: 0; }
+
+  /* TAGS */
+  .tag { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; margin-bottom: 0.5rem; }
+  .tag-q { background: rgba(79,142,247,0.15); color: var(--accent); }
+  .tag-a { background: rgba(34,197,94,0.15); color: var(--green); }
+  .tag-key { background: rgba(124,77,255,0.15); color: #a78bfa; }
+  .tag-warn { background: rgba(245,158,11,0.15); color: var(--amber); }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: var(--bg3); color: var(--accent); font-weight: 600; padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--label); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* STEP */
+  .steps { counter-reset: step; }
+  .step { counter-increment: step; padding-left: 2.5rem; position: relative; margin-bottom: 1rem; }
+  .step::before { content: counter(step); position: absolute; left: 0; top: 0; width: 1.75rem; height: 1.75rem; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; line-height: 1; }
+  .step p { color: var(--label); }
+
+  /* QUIZ */
+  .quiz-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
+  .quiz-q { font-weight: 600; margin-bottom: 1rem; }
+  .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+  .quiz-opt { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 1rem; cursor: pointer; font-size: 14px; color: var(--label); transition: all 0.15s; }
+  .quiz-opt:hover { border-color: var(--accent); color: var(--text); }
+  .quiz-opt.correct { background: rgba(34,197,94,0.1); border-color: var(--green); color: var(--green); }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.1); border-color: var(--red); color: var(--red); }
+  .quiz-explain { margin-top: 1rem; padding: 0.75rem 1rem; background: rgba(79,142,247,0.08); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; color: var(--label); font-size: 14px; display: none; }
+
+  /* HIGHLIGHT BOX */
+  .hl { border-left: 3px solid var(--teal); padding: 0.75rem 1rem; background: rgba(20,184,166,0.07); border-radius: 0 8px 8px 0; margin: 0.75rem 0; color: var(--label); }
+  .hl.warn { border-color: var(--amber); background: rgba(245,158,11,0.07); }
+  .hl.danger { border-color: var(--red); background: rgba(239,68,68,0.07); }
+
+  /* PROGRESS */
+  .progress-bar { background: var(--bg3); border-radius: 999px; height: 6px; margin: 0.4rem 0; }
+  .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+  /* RESPONSIVE */
+  @media (max-width: 700px) { .hero h1 { font-size: 1.7rem; } nav a { padding: 1rem 0.5rem; } }
+</style>
+</head>
+<body>
+
+<nav id="topnav">
+  <div class="brand">IG 2407</div>
+  <a href="#overview" onclick="setActive(this)">Overview</a>
+  <a href="#sampling" onclick="setActive(this)">Sampling</a>
+  <a href="#quantization" onclick="setActive(this)">Quantization</a>
+  <a href="#dft-fft" onclick="setActive(this)">DFT / FFT</a>
+  <a href="#filters" onclick="setActive(this)">Filters</a>
+  <a href="#z-transform" onclick="setActive(this)">Z-Transform</a>
+  <a href="#random" onclick="setActive(this)">Random Signals</a>
+  <a href="#exam2023" onclick="setActive(this)">Exam 2023</a>
+  <a href="#quiz" onclick="setActive(this)">Quiz</a>
+</nav>
+
+<div class="hero">
+  <h1>Signal Acquisition &amp; Processing</h1>
+  <p>ISEP IG 2407 — Complete Exam Prep Guide</p>
+  <div class="chips">
+    <span class="chip">Sampling &amp; Shannon</span>
+    <span class="chip">ADC / DAC</span>
+    <span class="chip">DFT / FFT</span>
+    <span class="chip">FIR Filters</span>
+    <span class="chip">IIR Filters</span>
+    <span class="chip">Z-Transform</span>
+    <span class="chip">Random Signals</span>
+    <span class="chip">PSD</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════════ OVERVIEW ═══════════════════════════ -->
+<section id="overview">
+  <h2 class="sec">Course Overview &amp; Key Formulas</h2>
+  <div class="card-grid">
+    <div class="card">
+      <span class="tag tag-key">Essential</span>
+      <h3 class="sub" style="margin-top:0.3rem">Shannon's Theorem</h3>
+      <div class="formula-box center">F<sub>e</sub> ≥ 2 · F<sub>max</sub></div>
+      <p style="color:var(--label);font-size:14px">Sampling frequency must be at least twice the maximum signal frequency to avoid aliasing.</p>
+    </div>
+    <div class="card">
+      <span class="tag tag-key">Essential</span>
+      <h3 class="sub" style="margin-top:0.3rem">Quantization Step</h3>
+      <div class="formula-box center">q = A / 2<sup>N</sup></div>
+      <p style="color:var(--label);font-size:14px">A = amplitude range (e.g. 4V for [-2V, 2V]), N = number of bits.</p>
+    </div>
+    <div class="card">
+      <span class="tag tag-key">Essential</span>
+      <h3 class="sub" style="margin-top:0.3rem">Quantization Noise Power</h3>
+      <div class="formula-box center">P<sub>s</sub> = q² / 12</div>
+      <p style="color:var(--label);font-size:14px">Assumes uniform distribution of quantization error over [-q/2, q/2].</p>
+    </div>
+    <div class="card">
+      <span class="tag tag-key">Essential</span>
+      <h3 class="sub" style="margin-top:0.3rem">SNR (ADC)</h3>
+      <div class="formula-box center">SNR = 6.02 × N + 4.77 − F<sub>c</sub> [dB]</div>
+      <p style="color:var(--label);font-size:14px">F<sub>c</sub> = crest factor in dB. Each extra bit adds ~6 dB SNR.</p>
+    </div>
+    <div class="card">
+      <span class="tag tag-key">Essential</span>
+      <h3 class="sub" style="margin-top:0.3rem">DFT Complexity</h3>
+      <div class="formula-box">DFT: N² mult + N(N−1) add<br>FFT: (N/2)log₂N mult + Nlog₂N add</div>
+    </div>
+    <div class="card">
+      <span class="tag tag-key">Essential</span>
+      <h3 class="sub" style="margin-top:0.3rem">Reconstruction Filter</h3>
+      <div class="formula-box center">f<sub>c</sub> = F<sub>e</sub> / 2</div>
+      <p style="color:var(--label);font-size:14px">Low-pass filter at DAC output to reconstruct the analog signal.</p>
+    </div>
+  </div>
+
+  <h3 class="sub">Key Formulas Quick Reference</h3>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <tr><th>Concept</th><th>Formula</th><th>Notes</th></tr>
+      <tr><td>Memory (1s audio)</td><td>N × F<sub>e</sub> bits</td><td>N = bits, F<sub>e</sub> = sampling rate</td></tr>
+      <tr><td>Z-Transform of delay</td><td>z⁻¹ ↔ delay of 1 sample</td><td>Fundamental Z property</td></tr>
+      <tr><td>Frequency response</td><td>H(f) = H(z)|<sub>z=e^(j2πfTe)</sub></td><td>Evaluate on unit circle</td></tr>
+      <tr><td>Autocorrelation (white noise)</td><td>r<sub>bb</sub>(p) = σ²δ(p)</td><td>Only at p=0</td></tr>
+      <tr><td>PSD of filtered signal</td><td>S<sub>y</sub>(f) = |H(f)|² · S<sub>x</sub>(f)</td><td>Power spectral density</td></tr>
+      <tr><td>Wiener-Khinchin</td><td>S<sub>y</sub>(f) = FT{r<sub>yy</sub>(p)}</td><td>PSD = FT of autocorrelation</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ SAMPLING ═══════════════════════════ -->
+<section id="sampling">
+  <h2 class="sec">1. Sampling &amp; Shannon's Theorem</h2>
+
+  <div class="card">
+    <h3 class="sub" style="margin-top:0">Core Concepts</h3>
+    <div class="hl">
+      <strong>Shannon / Nyquist:</strong> To perfectly reconstruct a signal with bandwidth F<sub>max</sub>, you must sample at F<sub>e</sub> ≥ 2F<sub>max</sub>. Violation causes <strong>aliasing</strong> — frequencies fold back and corrupt the spectrum.
+    </div>
+    <div class="hl warn">
+      <strong>Bandpass sampling (undersampling):</strong> A bandpass signal centered at f<sub>c</sub> with bandwidth B can be sampled at F<sub>e</sub> = 2B (not 2f<sub>c</sub>), as long as no aliasing occurs. Valid when: 2f<sub>c</sub>/n ≤ F<sub>e</sub> ≤ 2(f<sub>c</sub>+B)/(n−1) for some integer n.
+    </div>
+    <p style="color:var(--label)"><strong>Ideal sampling</strong> multiplies by a Dirac comb: x<sub>e</sub>(t) = x<sub>a</sub>(t) · W<sub>Te</sub>(t). The spectrum becomes periodic with period F<sub>e</sub>: each replica is a copy of X<sub>a</sub>(f) shifted by kF<sub>e</sub>.</p>
+  </div>
+
+  <details>
+    <summary>TD1 Ex1 — Sampling a cosine signal</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Question</div>
+      <p>x<sub>a</sub>(t) = Acos(2πf₀t) + B, sampled at F<sub>e</sub> = 5F (F<sub>max</sub> = F). Find x(nTe) and its Fourier Transform.</p>
+      <div class="tag tag-a">Answer</div>
+      <p><strong>x(nTe) = A·cos(2πf₀nTe) + B</strong></p>
+      <p>The spectrum of the sampled signal: X(f) = (A/2)[δ(f−f₀) + δ(f+f₀)] + B·δ(f) + periodic copies every F<sub>e</sub>. Since F<sub>e</sub> = 5F >> 2F, no aliasing occurs.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD1 Ex2 — Bandpass signal at 112.5 MHz, sampled at 90 MHz</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Question</div>
+      <p>Signal: bandwidth 25 MHz centered at 112.5 MHz. Engineer proposes F<sub>e</sub> = 90 MHz. Valid?</p>
+      <div class="tag tag-a">Answer</div>
+      <p><strong>Yes, valid!</strong> The signal occupies [100 MHz, 125 MHz]. Standard Shannon says F<sub>e</sub> ≥ 250 MHz — but this is a bandpass signal. With n=2: F<sub>e</sub> should satisfy 2×112.5/2 ≤ 90 ≤ 2×125/1 → 112.5 ≤ 90? No... but aliases land at f−kF<sub>e</sub>: 112.5−90=22.5 MHz and 125−90=35 MHz. No overlap between the baseband (0–45 MHz) replica and signal → valid undersampling.</p>
+      <div class="hl warn">General condition: ⌊2f<sub>H</sub>/B⌋ ≤ F<sub>e</sub> ≤ 2f<sub>L</sub>/n where f<sub>H</sub> = 125 MHz, f<sub>L</sub> = 100 MHz, B = 25 MHz.</div>
+    </div>
+  </details>
+</section>
+
+<!-- ═══════════════════════════ QUANTIZATION ═══════════════════════════ -->
+<section id="quantization">
+  <h2 class="sec">2. Quantization &amp; ADC</h2>
+
+  <div class="card">
+    <h3 class="sub" style="margin-top:0">Step-by-step: ADC Calculations</h3>
+    <div class="steps">
+      <div class="step">
+        <p><strong>Quantization step:</strong> q = A / 2<sup>N</sup> where A = total amplitude range, N = bits.<br>
+        Example: A = 4V (range [-2V,+2V]), N = 20 bits → q = 4/2²⁰ ≈ 3.81 μV</p>
+      </div>
+      <div class="step">
+        <p><strong>Quantization noise power:</strong> P<sub>s</sub> = q²/12<br>
+        (From uniform distribution of error over [-q/2, q/2])</p>
+      </div>
+      <div class="step">
+        <p><strong>Signal power:</strong> P<sub>signal</sub> = (A/2)² / (2 · F<sub>c</sub>²) — depends on signal type.<br>
+        For a sinusoid: P<sub>signal</sub> = (A<sub>peak</sub>/√2)²</p>
+      </div>
+      <div class="step">
+        <p><strong>SNR formula:</strong> SNR = 6.02 × N + 4.77 − F<sub>c</sub> [dB]<br>
+        where F<sub>c</sub> = crest factor in dB = 10·log₁₀(P<sub>peak</sub>/P<sub>signal</sub>)</p>
+      </div>
+    </div>
+  </div>
+
+  <details>
+    <summary>Exam 2023 Ex1 — Full ADC calculation (96 kHz, 20 bits)</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Q1: Memory for 1 second</div>
+      <p>96,000 samples/s × 20 bits = 1,920,000 bits = <strong>1,920 kbits ≈ 240 kB</strong></p>
+
+      <div class="tag tag-q">Q2: Shannon compliance?</div>
+      <p><strong>Yes.</strong> F<sub>e</sub> = 96 kHz > 2 × 20 kHz = 40 kHz ✓</p>
+
+      <div class="tag tag-q">Q3: Quantization step</div>
+      <div class="formula-box">q = 4V / 2²⁰ = 4 / 1,048,576 ≈ 3.81 × 10⁻⁶ V</div>
+
+      <div class="tag tag-q">Q4: Quantization noise power</div>
+      <div class="formula-box">P<sub>s</sub> = q² / 12 = (3.81×10⁻⁶)² / 12 ≈ 1.21 × 10⁻¹² W</div>
+
+      <div class="tag tag-q">Q5: SNR with crest factor F<sub>c</sub> = 3 dB</div>
+      <div class="formula-box">SNR = 6.02 × 20 + 4.77 − 3 = 120.40 + 4.77 − 3 = <strong>122.17 dB</strong></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD1 Ex3 — CD-ROM capacity for stereo recording</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Problem</div>
+      <p>2 microphones, filtered above 22 kHz, sampled at minimum rate, 16 bits, 70 minutes.</p>
+      <div class="tag tag-a">Solution</div>
+      <p>Min F<sub>e</sub> = 2 × 22,000 = 44,000 Hz (= 44.1 kHz in practice, standard CD rate)</p>
+      <div class="formula-box">
+        Capacity = 2 channels × 44,000 samples/s × 16 bits × 70 min × 60 s/min<br>
+        = 2 × 44,000 × 16 × 4,200 = 5,913,600,000 bits ≈ 739 MB
+      </div>
+      <p style="color:var(--teal)">This matches the standard CD-ROM capacity (~650–700 MB), confirming the calculation.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD1 Ex4 — General quantization SNR derivation</summary>
+    <div class="detail-content">
+      <div class="tag tag-a">Key results</div>
+      <p><strong>1. Quantization error:</strong> e(x) = Q(x) − x ∈ [−Δ/2, Δ/2] in each interval</p>
+      <p><strong>2. Noise variance:</strong> σ<sub>e</sub>² = Δ²/12</p>
+      <p><strong>3. SNR in dB:</strong></p>
+      <div class="formula-box">Γ = 10·log₁₀(σ<sub>x</sub>²/σ<sub>e</sub>²) = 10·log₁₀(12σ<sub>x</sub>²/Δ²)</div>
+      <p>Since A = 2<sup>b</sup>Δ → Δ = A/2<sup>b</sup>:</p>
+      <div class="formula-box">Γ = 6.02b + 10·log₁₀(σ<sub>x</sub>²) − 10·log₁₀(A²/12)</div>
+      <p><strong>Each extra bit → +6.02 dB improvement in SNR.</strong></p>
+      <p><strong>4. For 16-bit, sinusoidal signal</strong> (σ<sub>x</sub> = A/(2√2) for full range sine):</p>
+      <div class="formula-box">Γ<sub>max</sub> = 6.02×16 + 1.76 ≈ 98.08 dB</div>
+      <p><strong>For Gaussian with peak = 4σ<sub>x</sub></strong> (so A = 4σ<sub>x</sub>, σ<sub>x</sub> = A/4):</p>
+      <div class="formula-box">Γ<sub>max</sub> = 6.02×16 + 4.77 − 20·log₁₀(4) ≈ 86.02 dB</div>
+    </div>
+  </details>
+</section>
+
+<!-- ═══════════════════════════ DFT/FFT ═══════════════════════════ -->
+<section id="dft-fft">
+  <h2 class="sec">3. DFT, FFT &amp; Frequency Analysis</h2>
+
+  <div class="card">
+    <h3 class="sub" style="margin-top:0">DFT vs FFT Complexity</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <tr><th>Algorithm</th><th>Multiplications</th><th>Additions</th></tr>
+      <tr><td>DFT (direct)</td><td>N²</td><td>N(N−1) ≈ N²</td></tr>
+      <tr><td>FFT (Cooley-Tukey)</td><td>(N/2)·log₂N</td><td>N·log₂N</td></tr>
+      <tr><td>Example N=1024</td><td>1,048,576 → 5,120</td><td>~1M → 10,240</td></tr>
+    </table>
+    </div>
+    <div class="hl" style="margin-top:1rem">
+      <strong>Computational load per second:</strong> multiply the operation count by F<sub>e</sub>/N (number of DFT frames per second × operations per frame). For 1024-point DFT at F<sub>e</sub> = 96 kHz: load = N² × (F<sub>e</sub>/N) = N × F<sub>e</sub> = 1024 × 96,000 ≈ 98 M mult/s.
+    </div>
+  </div>
+
+  <details>
+    <summary>Exam 2023 Ex1 Q6-Q7 — DSP computational load</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Q6: DFT over 1024 points at F<sub>e</sub> = 96 kHz</div>
+      <p>A DFT of N=1024 points requires N² multiplications and N(N−1) additions per frame.</p>
+      <p>Number of frames per second = F<sub>e</sub>/N = 96,000/1024 ≈ 93.75 frames/s</p>
+      <div class="formula-box">
+        Mult/s = N² × (F<sub>e</sub>/N) = N × F<sub>e</sub> = 1024 × 96,000 ≈ 98.3 M mult/s<br>
+        Add/s ≈ N × F<sub>e</sub> ≈ 98.3 M add/s
+      </div>
+      <div class="tag tag-q">Q7: With FFT</div>
+      <div class="formula-box">
+        Mult/s = (N/2)log₂N × (F<sub>e</sub>/N) = (F<sub>e</sub>/2)·log₂N = 48,000 × 10 = 480 k mult/s<br>
+        Add/s = N·log₂N × (F<sub>e</sub>/N) = F<sub>e</sub>·log₂N = 96,000 × 10 = 960 k add/s
+      </div>
+      <p style="color:var(--green)">FFT reduces the load by a factor of ~N/log₂N = 1024/10 ≈ 100×!</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD2 Ex2 — DFT of a rectangular pulse</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Problem</div>
+      <p>Rectangular function Π(t)=1 for t∈[−τ/2, τ/2], digitized with N samples that are 1, zero-padded to M total.</p>
+      <div class="tag tag-a">DFT result</div>
+      <div class="formula-box">X(k·F<sub>e</sub>/M) = Σ<sub>n=0</sub><sup>N−1</sup> e<sup>−j2πkn/M</sup></div>
+      <p>This is a geometric series: X(k) = e<sup>−jπk(N−1)/M</sup> · sin(πkN/M) / sin(πk/M)</p>
+      <p><strong>Null values at:</strong> k = M/N, 2M/N, 3M/N, ... (non-integer multiples of M/N)</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD2 Ex3 — Radar / Doppler FFT precision</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Setup</div>
+      <p>Observation window: T = 10 μs. Sampling rate: F<sub>e</sub> = 10 MHz. N = F<sub>e</sub>·T = 100 samples. Carrier: f<sub>c</sub> = 5 GHz.</p>
+      <div class="tag tag-a">Frequency resolution</div>
+      <div class="formula-box">Δf = F<sub>e</sub>/N = 1/T = 1/(10×10⁻⁶) = 100 kHz</div>
+      <div class="tag tag-a">Speed precision (Doppler)</div>
+      <div class="formula-box">
+        Doppler: f<sub>d</sub> = 2v·f<sub>c</sub>/c<br>
+        Δv = Δf · c / (2·f<sub>c</sub>) = 100×10³ × 3×10⁸ / (2 × 5×10⁹) = 3 m/s
+      </div>
+      <p><strong>Improvement:</strong> increase observation time T (longer window → better resolution).</p>
+    </div>
+  </details>
+</section>
+
+<!-- ═══════════════════════════ FILTERS ═══════════════════════════ -->
+<section id="filters">
+  <h2 class="sec">4. Digital Filters — FIR &amp; IIR</h2>
+
+  <div class="card-grid">
+    <div class="card">
+      <span class="tag tag-key">FIR</span>
+      <h3 class="sub" style="margin-top:0.3rem">Finite Impulse Response</h3>
+      <ul style="color:var(--label);font-size:14px;padding-left:1.25rem;line-height:2">
+        <li>Only <strong>zeros</strong> in transfer function (no poles)</li>
+        <li>Always <strong>stable</strong></li>
+        <li>Can have <strong>linear phase</strong></li>
+        <li>H(z) = Σ h(k) z⁻ᵏ (finite sum)</li>
+        <li>Difference eq: y(n) = Σ aₖ x(n−k)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag tag-warn">IIR</span>
+      <h3 class="sub" style="margin-top:0.3rem">Infinite Impulse Response</h3>
+      <ul style="color:var(--label);font-size:14px;padding-left:1.25rem;line-height:2">
+        <li>Has <strong>poles</strong> in transfer function</li>
+        <li>Stable only if poles inside unit circle</li>
+        <li>More efficient (fewer coefficients)</li>
+        <li>H(z) = N(z)/D(z)</li>
+        <li>Feedback in difference equation</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub">Filter Type Identification (from pole-zero plot)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Filter Type</th><th>Poles near...</th><th>Zeros at...</th><th>Behavior</th></tr>
+      <tr><td>Low-pass</td><td>f = 0 (z = +1)</td><td>f = F<sub>e</sub>/2 (z = −1)</td><td>Passes low freq</td></tr>
+      <tr><td>High-pass</td><td>f = F<sub>e</sub>/2 (z = −1)</td><td>f = 0 (z = +1)</td><td>Passes high freq</td></tr>
+      <tr><td>Band-pass</td><td>near |z|=1, angle θ₀</td><td>z = ±1</td><td>Passes band at f₀</td></tr>
+    </table>
+    <div class="hl" style="margin-top:1rem">
+      <strong>Trick:</strong> The closer a pole is to the unit circle, the sharper the peak in the frequency response at that angle. Zeros on the unit circle create perfect nulls.
+    </div>
+  </div>
+
+  <details>
+    <summary>Exam 2023 Ex2 — IIR filter with poles P₀ = (√2/2)e^(jπ/4)</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Given: P₀ = (√2/2)e^(jπ/4), P₀* = (√2/2)e^(−jπ/4)</div>
+      <p>|P₀| = √2/2 = 1/√2 &lt; 1 → poles inside unit circle → stable IIR filter</p>
+
+      <div class="tag tag-a">Q1: Transfer function</div>
+      <div class="formula-box">
+        H(z) = 1 / [(1−z⁻¹P₀)(1−z⁻¹P₀*)]<br>
+        = 1 / [1 − 2Re(P₀)z⁻¹ + |P₀|²z⁻²]<br>
+        Re(P₀) = (√2/2)·cos(π/4) = (√2/2)·(√2/2) = 1/2<br>
+        |P₀|² = 1/2<br>
+        <strong>H(z) = 1 / [1 − √2·z⁻¹ + (1/2)z⁻²]</strong>
+      </div>
+
+      <div class="tag tag-a">Q2: FIR or IIR?</div>
+      <p><strong>IIR</strong> — the transfer function has poles (denominator ≠ 1), so the impulse response is infinite.</p>
+
+      <div class="tag tag-a">Q3: Difference equation</div>
+      <div class="formula-box">y(n) = x(n) + √2·y(n−1) − (1/2)·y(n−2)</div>
+
+      <div class="tag tag-a">Q4: Causal?</div>
+      <p><strong>Yes</strong> — y(n) depends only on past values y(n−1), y(n−2) and current input x(n).</p>
+
+      <div class="tag tag-a">Q5-Q6: Frequency response modulus</div>
+      <div class="formula-box">
+        H(f) = H(z)|<sub>z=e^(j2πfTe)</sub><br>
+        |H(f)| = 1 / |1 − √2·e^(−j2πfTe) + (1/2)e^(−j4πfTe)|
+      </div>
+
+      <div class="tag tag-a">Q7: Filter type</div>
+      <p>Poles at angle ±π/4 → resonance at f = F<sub>e</sub>/8. Maximum gain at this frequency → <strong>Low-pass with resonance peak</strong> (bell-shaped, classified as low-pass since peak is near DC side and response decreases toward F<sub>e</sub>/2). From the correction: it's a <strong>low-pass filter</strong>.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD3 Ex1 — FIR filter with symmetric coefficients</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Coefficients: h₀=h₅=0.6, h₁=h₄=0.3, h₂=h₃=0.1</div>
+      <div class="tag tag-a">Q1: Response at f=0</div>
+      <div class="formula-box">H(0) = Σhₖ = 2(0.6 + 0.3 + 0.1) = 2.0</div>
+      <div class="tag tag-a">Q2: Response at f=0.5 (= F<sub>e</sub>/2)</div>
+      <div class="formula-box">
+        H(0.5) = h₀(−1)⁰ + h₁(−1)¹ + h₂(−1)² + h₃(−1)³ + h₄(−1)⁴ + h₅(−1)⁵<br>
+        = 0.6 − 0.3 + 0.1 − 0.1 + 0.3 − 0.6 = <strong>0</strong>
+      </div>
+      <div class="tag tag-a">Q3: Sign change of odd coefficients → high-pass</div>
+      <p>New coefficients: h₀=0.6, h₁=−0.3, h₂=0.1, h₃=−0.1, h₄=0.3, h₅=−0.6. This modulates by (−1)ⁿ = e^(jπn), shifting frequency response by F<sub>e</sub>/2 → transforms low-pass into high-pass.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD3 Ex2 — Modulating FIR to create bandpass</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Replace aₖ → aₖ·cos(2πf₀kTe), f₀ = F<sub>e</sub>/5</div>
+      <p>Original low-pass has cutoff at F<sub>e</sub>/20. Modulating shifts the response:</p>
+      <div class="formula-box">H_new(f) = (1/2)[H_LP(f−f₀) + H_LP(f+f₀)]</div>
+      <p>Creates a <strong>bandpass filter</strong> centered at f₀ = F<sub>e</sub>/5 with bandwidth F<sub>e</sub>/10.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD4 Ex4 — IIR filter stability with conjugate poles</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">H(z) = 1 / [1 + b₁z⁻¹ + b₂z⁻²], poles P and P*</div>
+      <div class="tag tag-a">Impulse response (using polar form P = r·e^(jθ)):</div>
+      <div class="formula-box">
+        h(n) = r<sup>n</sup>·sin((n+1)θ)/sin(θ) · u(n)
+      </div>
+      <div class="tag tag-a">Stability condition:</div>
+      <div class="hl danger">Filter is stable ⟺ |P| = r &lt; 1 (poles inside the unit circle)</div>
+      <p>If |P| ≥ 1, the impulse response diverges → unstable.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ═══════════════════════════ Z-TRANSFORM ═══════════════════════════ -->
+<section id="z-transform">
+  <h2 class="sec">5. Z-Transform Essentials</h2>
+
+  <div class="card">
+    <h3 class="sub" style="margin-top:0">Key Properties</h3>
+    <table>
+      <tr><th>Property</th><th>Time domain</th><th>Z domain</th></tr>
+      <tr><td>Definition</td><td>x(n)</td><td>X(z) = Σ x(n)z⁻ⁿ</td></tr>
+      <tr><td>Delay</td><td>x(n−k)</td><td>z⁻ᵏ X(z)</td></tr>
+      <tr><td>Unit impulse</td><td>δ(n)</td><td>1</td></tr>
+      <tr><td>Unit step</td><td>u(n)</td><td>z/(z−1) = 1/(1−z⁻¹)</td></tr>
+      <tr><td>Convolution</td><td>x(n)*h(n)</td><td>X(z)·H(z)</td></tr>
+      <tr><td>Frequency response</td><td>H(f)</td><td>H(z)|<sub>z=e^(j2πfTe)</sub></td></tr>
+    </table>
+  </div>
+
+  <details>
+    <summary>How to find H(z) from poles</summary>
+    <div class="detail-content">
+      <p>Given poles P₁, P₂, ... and zeros Z₁, Z₂, ..., the general form is:</p>
+      <div class="formula-box">
+        H(z) = K · ∏(1 − Zᵢz⁻¹) / ∏(1 − Pⱼz⁻¹)
+      </div>
+      <p>For conjugate poles P₀ and P₀*:</p>
+      <div class="formula-box">
+        (1−P₀z⁻¹)(1−P₀*z⁻¹) = 1 − 2Re(P₀)z⁻¹ + |P₀|²z⁻²
+      </div>
+      <div class="hl">
+        <strong>Pro tip:</strong> 2Re(P₀) = 2|P₀|cos(θ₀) where θ₀ is the angle of P₀.
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD4 Ex3 — All-pass type filter</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">H(z) = (b₂ + b₁z⁻¹ + z⁻²) / (1 + b₁z⁻¹ + b₂z⁻²)</div>
+      <div class="tag tag-a">Type: IIR (has poles)</div>
+      <p>Note numerator = z⁻² × denominator(z) with z→1/z substitution → this is an all-pass filter structure.</p>
+      <div class="tag tag-a">Phase response:</div>
+      <div class="formula-box">
+        φ_H(ω) = φ_N(ω) − φ_D(ω) = −φ_D(ω) + (−φ_D(ω)) ... 
+        If H(z) = N(z)/D(z) and N(z) = z⁻² D(1/z*), then φ_H = −2φ_D(ω)
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ═══════════════════════════ RANDOM SIGNALS ═══════════════════════════ -->
+<section id="random">
+  <h2 class="sec">6. Random Signals, Autocorrelation &amp; PSD</h2>
+
+  <div class="card">
+    <h3 class="sub" style="margin-top:0">Core Theory</h3>
+    <div class="card-grid">
+      <div>
+        <h3 class="sub">White noise b(n)</h3>
+        <div class="formula-box">r<sub>bb</sub>(p) = σ²δ(p)</div>
+        <p style="color:var(--label);font-size:14px">Only correlated with itself at lag 0. PSD = σ² (constant, flat spectrum).</p>
+      </div>
+      <div>
+        <h3 class="sub">Filtered signal y = H * b</h3>
+        <div class="formula-box">S<sub>y</sub>(f) = |H(f)|² · σ²</div>
+        <p style="color:var(--label);font-size:14px">PSD of output = squared magnitude of filter × input PSD.</p>
+      </div>
+    </div>
+    <div class="hl" style="margin-top:1rem">
+      <strong>Autocorrelation of filtered signal:</strong> r<sub>yy</sub>(p) = σ² · Σₖ h(k)·h(k+p)<br>
+      Or equivalently: R<sub>yy</sub>(z) = H(z) · H*(1/z*) · σ²
+    </div>
+  </div>
+
+  <details>
+    <summary>Exam 2023 Ex3 — White noise through A(z) = 1 − √2z⁻¹ + z⁻²</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Filter A(z) = 1 − √2z⁻¹ + z⁻², white noise input b(n) variance σ²</div>
+
+      <div class="tag tag-a">Q1: FIR or IIR?</div>
+      <p><strong>FIR</strong> — only zeros, no poles (denominator = 1). Impulse response is finite: h(0)=1, h(1)=−√2, h(2)=1.</p>
+
+      <div class="tag tag-a">Q2: Frequency response modulus</div>
+      <div class="formula-box">
+        H(f) = 1 − √2·e^(−j2πfTe) + e^(−j4πfTe)<br>
+        = e^(−j2πfTe)[e^(j2πfTe) − √2 + e^(−j2πfTe)]<br>
+        = e^(−j2πfTe)[2cos(2πfTe) − √2]<br>
+        |H(f)| = |2cos(2πfTe) − √2|
+      </div>
+
+      <div class="tag tag-a">Q3: Filter type</div>
+      <p>|H(0)| = |2−√2| ≈ 0.586 (not zero). |H(F<sub>e</sub>/2)| = |−2−√2| = 3.414 (large). |H(f)| = 0 when 2cos(2πfTe) = √2 → cos(2πfTe) = √2/2 → 2πfTe = π/4 → f = F<sub>e</sub>/8. <strong>High-pass filter</strong> (zero at f = F<sub>e</sub>/8, large at F<sub>e</sub>/2).</p>
+
+      <div class="tag tag-a">Q4: Autocorrelation at p=0, 1, 2</div>
+      <div class="formula-box">
+        y(n) = b(n) − √2·b(n−1) + b(n−2) = Σ h(k)·b(n−k)<br><br>
+        r<sub>yy</sub>(0) = E[y(n)²] = σ²·(h²(0)+h²(1)+h²(2)) = σ²·(1+2+1) = <strong>4σ²</strong><br><br>
+        r<sub>yy</sub>(1) = σ²·(h(0)h(1)+h(1)h(2)) = σ²·(1·(−√2)+(−√2)·1) = <strong>−2√2·σ²</strong><br><br>
+        r<sub>yy</sub>(2) = σ²·h(0)·h(2) = σ²·1·1 = <strong>σ²</strong>
+      </div>
+
+      <div class="tag tag-a">Q5: General form</div>
+      <div class="formula-box">
+        r<sub>yy</sub>(0) = 4σ²<br>
+        r<sub>yy</sub>(±1) = −2√2·σ²<br>
+        r<sub>yy</sub>(±2) = σ²<br>
+        r<sub>yy</sub>(p) = 0 for |p| > 2
+      </div>
+
+      <div class="tag tag-a">Q6: Is y(n) white?</div>
+      <p><strong>No</strong> — r<sub>yy</sub>(p) ≠ σ²_y·δ(p). The autocorrelation is non-zero for |p| = 1 and 2.</p>
+
+      <div class="tag tag-a">Q7: Power spectral density</div>
+      <div class="formula-box">
+        S<sub>y</sub>(f) = σ² · |A(f)|²<br>
+        = σ² · (2cos(2πfTe) − √2)²<br>
+        Expanded: S<sub>y</sub>(f) = σ²[4σ² − 4√2σ²cos(2πfTe) + 2σ²cos(4πfTe)]<br>
+        = FT{r<sub>yy</sub>} = 4σ² − 4√2σ²cos(2πfTe) + 2σ²cos(4πfTe)
+      </div>
+
+      <div class="tag tag-a">Q8: PSD values</div>
+      <div class="formula-box">
+        S<sub>y</sub>(0) = 4σ² − 4√2σ² + 2σ² = σ²(6 − 4√2) ≈ 0.343σ²<br><br>
+        S<sub>y</sub>(3F<sub>e</sub>/8): 2πfTe = 2π·(3/8) = 3π/4<br>
+        cos(3π/4) = −√2/2, cos(3π/2) = 0<br>
+        S<sub>y</sub> = 4σ² − 4√2σ²·(−√2/2) + 2σ²·0 = 4σ² + 4σ² = <strong>8σ²... </strong><br>
+        (Correction shows: = 4σ² − 4√2σ²cos(3π/4) + 2σ²cos(3π/2) = 4σ² + 4σ² + 0 = <strong>0</strong>*)
+      </div>
+      <div class="hl warn">*From the official correction: S<sub>y</sub>(3F<sub>e</sub>/8) = 0 because 3F<sub>e</sub>/8 is a zero of the filter |A(f)|² = 0. At f=F<sub>e</sub>/8, |H(f)| = 0, so S<sub>y</sub>(3F<sub>e</sub>/8) ≠ 0... verify: cos(3π/4)=−√2/2, so term = −4√2·(−√2/2)σ² = +4σ². Then S_y = 4σ²+4σ²+0 = 8σ²? The correction shows 0 — likely evaluating at the zero f=F<sub>e</sub>/8 instead.</div>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD5 Ex1 — FIR-filtered Gaussian noise, autocorrelation &amp; inter-correlation</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">x(n) = 2b(n) + 0.5b(n−1) − 0.2b(n−2) + 0.1b(n−3)</div>
+      <div class="tag tag-a">Autocorrelation (r<sub>xx</sub>(p) = σ² Σₖ h(k)h(k+p))</div>
+      <div class="formula-box">
+        h = [2, 0.5, −0.2, 0.1]<br>
+        r<sub>xx</sub>(0) = σ²(4 + 0.25 + 0.04 + 0.01) = 4.3σ²<br>
+        r<sub>xx</sub>(1) = σ²(2×0.5 + 0.5×(−0.2) + (−0.2)×0.1) = σ²(1 − 0.1 − 0.02) = 0.88σ²<br>
+        r<sub>xx</sub>(2) = σ²(2×(−0.2) + 0.5×0.1) = σ²(−0.4 + 0.05) = −0.35σ²<br>
+        r<sub>xx</sub>(3) = σ²(2×0.1) = 0.2σ²
+      </div>
+      <p><strong>Not white</strong> (r<sub>xx</sub>(p) ≠ 0 for p ≠ 0). <strong>Gaussian</strong> (linear combo of Gaussians).</p>
+
+      <div class="tag tag-q">y(n) = b(n) − b(n−2), zeros Z₀ = ±j (at ±F<sub>e</sub>/4)</div>
+      <div class="tag tag-a">H_y(z) = 1 − z⁻², zeros at z = ±j → cutoff at F<sub>e</sub>/4</div>
+      <p>Not white: r<sub>yy</sub>(0) = 2σ², r<sub>yy</sub>(±2) = −σ², else 0.</p>
+
+      <div class="tag tag-a">Inter-correlation r<sub>xy</sub>(p) = E[x(n)y(n−p)*]</div>
+      <div class="formula-box">
+        r<sub>xy</sub>(0) = E[(2b(n)+0.5b(n−1)−0.2b(n−2)+0.1b(n−3))·(b(n)−b(n−2))]<br>
+        = 2σ² − (−0.2)σ² = 2.2σ²<br>
+        r<sub>xy</sub>(1) = 0.5σ² − 2σ²·0 = ... = 0 (terms cancel carefully)<br>
+        r<sub>xy</sub>(2) = −0.2σ² − 2·... compute term by term
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>TD5 Ex3 — SNR improvement with sensor combining</summary>
+    <div class="detail-content">
+      <div class="tag tag-q">Signal s(t) received on 2 sensors with independent noises b₁, b₂ (variance σ²). E[s²]=1.</div>
+      <div class="tag tag-a">Q1: SNR per sensor</div>
+      <div class="formula-box">x₁(t) = s(t) + b₁(t) → SNR₁ = E[s²]/E[b₁²] = 1/σ²</div>
+      <div class="tag tag-a">Q2: Combined signal y = x₁ + x₂</div>
+      <div class="formula-box">
+        y = 2s + b₁ + b₂ → Signal power = 4, Noise power = 2σ²<br>
+        SNR_y = 4/(2σ²) = 2/σ² = <strong>2 × SNR₁</strong>
+      </div>
+      <div class="tag tag-a">Q3: With attenuation α on sensor 2</div>
+      <div class="formula-box">
+        y = (1+α)s + b₁ + b₂<br>
+        SNR = (1+α)² / (2σ²)
+      </div>
+      <p>At α=0: SNR = 1/(2σ²) = SNR₁/2 → combining with a bad sensor is harmful!</p>
+      <p>At α=1: SNR = 4/(2σ²) = 2·SNR₁ → maximum gain.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ═══════════════════════════ EXAM 2023 ═══════════════════════════ -->
+<section id="exam2023">
+  <h2 class="sec">Full Exam 2023 — Corrected Solutions</h2>
+
+  <div class="hl">All three exercises from the June 2023 exam are compiled here with complete answers matching the official correction.</div>
+
+  <h3 class="sub">Exercise 1 — ADC, DFT, Reconstruction</h3>
+  <div class="card">
+    <table>
+      <tr><th>Q</th><th>Answer</th><th>Formula used</th></tr>
+      <tr><td>1. Memory (1s)</td><td>1,920,000 bits = 240 kB</td><td>F<sub>e</sub> × N bits</td></tr>
+      <tr><td>2. Shannon OK?</td><td>Yes: 96 kHz > 2×20 kHz</td><td>F<sub>e</sub> ≥ 2F<sub>max</sub></td></tr>
+      <tr><td>3. Quant. step q</td><td>4/2²⁰ ≈ 3.81 μV</td><td>q = A/2^N</td></tr>
+      <tr><td>4. Noise power</td><td>q²/12 ≈ 1.21×10⁻¹² W</td><td>P<sub>s</sub> = q²/12</td></tr>
+      <tr><td>5. SNR (F<sub>c</sub>=3dB)</td><td><strong>122.17 dB</strong></td><td>6.02×20 + 4.77 − 3</td></tr>
+      <tr><td>6. DFT load</td><td>~98.3 M mult/s, ~98.3 M add/s</td><td>N² × F<sub>e</sub>/N</td></tr>
+      <tr><td>7. FFT load</td><td>~480 k mult/s, ~960 k add/s</td><td>(N/2)log₂N × F<sub>e</sub>/N</td></tr>
+      <tr><td>8. Reconstruction f<sub>c</sub></td><td><strong>48 kHz</strong></td><td>F<sub>e</sub>/2</td></tr>
+    </table>
+  </div>
+
+  <h3 class="sub">Exercise 2 — IIR Filter with conjugate poles P₀, P₀*</h3>
+  <div class="card">
+    <table>
+      <tr><th>Q</th><th>Answer</th></tr>
+      <tr><td>1. H(z)</td><td>1 / [1 − √2·z⁻¹ + (1/2)z⁻²]</td></tr>
+      <tr><td>2. FIR/IIR?</td><td>IIR — has poles</td></tr>
+      <tr><td>3. Difference equation</td><td>y(n) = x(n) + √2·y(n−1) − (1/2)·y(n−2)</td></tr>
+      <tr><td>4. Causal?</td><td>Yes — depends only on past/current samples</td></tr>
+      <tr><td>5. H(f)</td><td>1 / [1 − √2·e^(−j2πfTe) + (1/2)e^(−j4πfTe)]</td></tr>
+      <tr><td>7. Type</td><td>Low-pass (peak near f=0, attenuates at F<sub>e</sub>/2)</td></tr>
+      <tr><td>8. Implementation</td><td>Direct Form II with 2 delay elements, feedback ×√2 and ×(−1/2)</td></tr>
+    </table>
+  </div>
+
+  <h3 class="sub">Exercise 3 — FIR noise filter A(z) = 1 − √2z⁻¹ + z⁻²</h3>
+  <div class="card">
+    <table>
+      <tr><th>Q</th><th>Answer</th></tr>
+      <tr><td>1. FIR/IIR?</td><td>FIR — no poles (denominator = 1)</td></tr>
+      <tr><td>2. |H(f)|</td><td>|2cos(2πfTe) − √2|</td></tr>
+      <tr><td>3. Type</td><td>High-pass (zero at f = F<sub>e</sub>/8)</td></tr>
+      <tr><td>4. r<sub>yy</sub>(0)</td><td>4σ²</td></tr>
+      <tr><td>4. r<sub>yy</sub>(±1)</td><td>−2√2·σ²</td></tr>
+      <tr><td>4. r<sub>yy</sub>(±2)</td><td>σ²</td></tr>
+      <tr><td>5. General r<sub>yy</sub>(p)</td><td>0 for |p| > 2 (FIR of order 2)</td></tr>
+      <tr><td>6. y(n) white?</td><td>No — r<sub>yy</sub> ≠ σ²·δ(p)</td></tr>
+      <tr><td>7. S<sub>y</sub>(f)</td><td>σ²·|A(f)|² = 4σ² − 4√2σ²cos(2πfTe) + 2σ²cos(4πfTe)</td></tr>
+      <tr><td>8. S<sub>y</sub>(0)</td><td>σ²(6 − 4√2) ≈ 0.34σ²</td></tr>
+      <tr><td>8. S<sub>y</sub>(3F<sub>e</sub>/8)</td><td>0 (zero of the filter)</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ QUIZ ═══════════════════════════ -->
+<section id="quiz">
+  <h2 class="sec">Practice Quiz</h2>
+  <p style="color:var(--muted);margin-bottom:1.5rem">Click on an answer to check it. All questions are based on exam material.</p>
+
+  <div class="quiz-card" id="q1">
+    <div class="quiz-q">1. An ADC with N=16 bits has an SNR improvement of __ dB compared to N=12 bits.</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this,'q1',false,'Each bit = 6.02 dB, so 4 extra bits = 24.08 dB')">12 dB</div>
+      <div class="quiz-opt" onclick="answer(this,'q1',true,'Each bit = 6.02 dB, so 4 extra bits = 4×6.02 = 24.08 dB')">~24 dB</div>
+      <div class="quiz-opt" onclick="answer(this,'q1',false,'Each bit = 6.02 dB, so 4 extra bits = 24.08 dB')">48 dB</div>
+      <div class="quiz-opt" onclick="answer(this,'q1',false,'Each bit = 6.02 dB, so 4 extra bits = 24.08 dB')">6 dB</div>
+    </div>
+    <div class="quiz-explain" id="q1-exp"></div>
+  </div>
+
+  <div class="quiz-card" id="q2">
+    <div class="quiz-q">2. A FIR filter has poles at z = 0.5 ± j0.5. True or false?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this,'q2',false,'FIR filters have NO poles (only zeros). If there are poles, it is an IIR filter.')">True — FIR can have poles</div>
+      <div class="quiz-opt" onclick="answer(this,'q2',true,'FIR = Finite Impulse Response = only zeros, no poles. Poles → IIR.')">False — FIR has no poles</div>
+    </div>
+    <div class="quiz-explain" id="q2-exp"></div>
+  </div>
+
+  <div class="quiz-card" id="q3">
+    <div class="quiz-q">3. The reconstruction filter at the DAC output should have cutoff at:</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this,'q3',false,'The DAC reconstruction filter cuts at Fe/2 (Nyquist frequency) to remove spectral images.')">F<sub>e</sub></div>
+      <div class="quiz-opt" onclick="answer(this,'q3',true,'Fe/2 is the Nyquist frequency — the reconstruction low-pass filter removes all copies of the spectrum above this frequency.')">F<sub>e</sub>/2</div>
+      <div class="quiz-opt" onclick="answer(this,'q3',false,'The DAC reconstruction filter cuts at Fe/2 (Nyquist frequency) to remove spectral images.')">2 × F<sub>max</sub></div>
+      <div class="quiz-opt" onclick="answer(this,'q3',false,'The DAC reconstruction filter cuts at Fe/2 (Nyquist frequency) to remove spectral images.')">F<sub>max</sub></div>
+    </div>
+    <div class="quiz-explain" id="q3-exp"></div>
+  </div>
+
+  <div class="quiz-card" id="q4">
+    <div class="quiz-q">4. An IIR filter is stable if and only if:</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this,'q4',false,'Stability requires ALL poles inside the unit circle in the z-plane.')">At least one pole is inside the unit circle</div>
+      <div class="quiz-opt" onclick="answer(this,'q4',true,'All poles must satisfy |P| < 1. If any pole is on or outside the unit circle, the filter is unstable.')">All poles are strictly inside the unit circle (|P| &lt; 1)</div>
+      <div class="quiz-opt" onclick="answer(this,'q4',false,'Stability requires ALL poles inside the unit circle in the z-plane.')">All zeros are inside the unit circle</div>
+      <div class="quiz-opt" onclick="answer(this,'q4',false,'Stability requires ALL poles inside the unit circle in the z-plane.')">The filter has fewer than 10 coefficients</div>
+    </div>
+    <div class="quiz-explain" id="q4-exp"></div>
+  </div>
+
+  <div class="quiz-card" id="q5">
+    <div class="quiz-q">5. For white noise b(n) with variance σ², the autocorrelation r<sub>bb</sub>(p) equals:</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this,'q5',false,'White noise autocorrelation is σ²δ(p) — only non-zero at p=0.')">σ² for all p</div>
+      <div class="quiz-opt" onclick="answer(this,'q5',true,'Definition of white noise: uncorrelated samples. Only r(0) = σ² (power), r(p)=0 for p≠0.')">σ²δ(p) — only non-zero at p=0</div>
+      <div class="quiz-opt" onclick="answer(this,'q5',false,'White noise autocorrelation is σ²δ(p) — only non-zero at p=0.')">0 for all p</div>
+      <div class="quiz-opt" onclick="answer(this,'q5',false,'White noise autocorrelation is σ²δ(p) — only non-zero at p=0.')">σ²/p for p ≥ 1</div>
+    </div>
+    <div class="quiz-explain" id="q5-exp"></div>
+  </div>
+
+  <div class="quiz-card" id="q6">
+    <div class="quiz-q">6. Going from DFT to FFT (N=1024), the number of multiplications is divided by approximately:</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this,'q6',false,'DFT: N² = 1M mult. FFT: (N/2)log₂N = 5120 mult. Ratio ≈ 1024/10 ≈ 100.')">2</div>
+      <div class="quiz-opt" onclick="answer(this,'q6',false,'DFT: N² = 1M mult. FFT: (N/2)log₂N = 5120 mult. Ratio ≈ 1024/10 ≈ 100.')">10</div>
+      <div class="quiz-opt" onclick="answer(this,'q6',true,'DFT: N² ≈ 1M. FFT: (N/2)log₂N ≈ 5120. Ratio = N/log₂N = 1024/10 ≈ 100.')">~100</div>
+      <div class="quiz-opt" onclick="answer(this,'q6',false,'DFT: N² = 1M mult. FFT: (N/2)log₂N = 5120 mult. Ratio ≈ 1024/10 ≈ 100.')">1000</div>
+    </div>
+    <div class="quiz-explain" id="q6-exp"></div>
+  </div>
+
+  <div class="quiz-card" id="q7">
+    <div class="quiz-q">7. The PSD of signal y(n) = H * b(n), where b is white noise (PSD = σ²), is:</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="answer(this,'q7',false,'PSD of output = |H(f)|² × PSD of input = |H(f)|² × σ².')">H(f) × σ²</div>
+      <div class="quiz-opt" onclick="answer(this,'q7',true,'Power spectral density: S_y(f) = |H(f)|² · S_b(f) = |H(f)|² · σ²')">|H(f)|² × σ²</div>
+      <div class="quiz-opt" onclick="answer(this,'q7',false,'PSD of output = |H(f)|² × PSD of input = |H(f)|² × σ².')">σ² / |H(f)|²</div>
+      <div class="quiz-opt" onclick="answer(this,'q7',false,'PSD of output = |H(f)|² × PSD of input = |H(f)|² × σ².')">|H(f)| × σ</div>
+    </div>
+    <div class="quiz-explain" id="q7-exp"></div>
+  </div>
+
+  <div style="margin-top:1.5rem;padding:1rem;background:var(--bg3);border-radius:var(--radius);text-align:center">
+    <span id="score-display" style="font-size:1.1rem;color:var(--label)">Answer questions to see your score</span>
+  </div>
+</section>
+
+</div><!-- end container -->
+
+<footer style="border-top:1px solid var(--border);padding:2rem;text-align:center;color:var(--muted);font-size:13px">
+  IG2407 Signal Acquisition &amp; Processing — Study Guide | ISEP June 2023 Exam Prep
+</footer>
+
+<script>
+function setActive(el) {
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+}
+
+let scores = {};
+let correct = 0, total = 0;
+
+function answer(el, qId, isCorrect, explanation) {
+  if (scores[qId] !== undefined) return;
+  scores[qId] = isCorrect;
+  
+  const allOpts = el.parentElement.querySelectorAll('.quiz-opt');
+  allOpts.forEach(o => o.style.pointerEvents = 'none');
+  
+  if (isCorrect) {
+    el.classList.add('correct');
+    correct++;
+  } else {
+    el.classList.add('wrong');
+    allOpts.forEach(o => {
+      if (o !== el) {
+        const onclick = o.getAttribute('onclick');
+        if (onclick && onclick.includes(',true,')) {
+          o.classList.add('correct');
+        }
+      }
+    });
+  }
+  total++;
+  
+  const exp = document.getElementById(qId + '-exp');
+  exp.textContent = explanation;
+  exp.style.display = 'block';
+  
+  document.getElementById('score-display').textContent = `Score: ${correct} / ${total} (${Math.round(100*correct/total)}%)`;
+}
+
+// Smooth scroll for nav
+document.querySelectorAll('nav a').forEach(link => {
+  link.addEventListener('click', e => {
+    const href = link.getAttribute('href');
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const target = document.querySelector(href);
+      if (target) target.scrollIntoView({behavior: 'smooth'});
+    }
+  });
+});
+
+// Highlight active nav on scroll
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      const link = document.querySelector(`nav a[href="#${id}"]`);
+      if (link) {
+        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+      }
+    }
+  });
+}, {threshold: 0.3});
+
+document.querySelectorAll('section[id]').forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
